@@ -1,0 +1,16 @@
+import pytest
+from fastapi.testclient import TestClient
+
+from app.main import create_app
+
+
+@pytest.fixture
+def db_path(tmp_path):
+    return str(tmp_path / "school.db")
+
+
+@pytest.fixture
+def client(db_path):
+    app = create_app(db_path)
+    with TestClient(app) as test_client:
+        yield test_client

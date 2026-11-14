@@ -1,0 +1,10 @@
+<label>Child
+  <select name="child_id">
+    {% if shared %}
+    <option value="both" {% if chosen == 'both' or chosen is none %}selected{% endif %}>Both</option>
+    {% endif %}
+    {% for kid in children %}
+    <option value="{{ kid.id }}" {% if chosen|string == kid.id|string %}selected{% endif %}>{{ kid.name }}</option>
+    {% endfor %}
+  </select>
+</label>

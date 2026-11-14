@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Grades{% endblock %}
+{% block content %}
+<h2>Grades</h2>
+<p><a href="/grades/new?child={{ filter_value }}">Add a grade</a></p>
+{% if rows %}
+<table>
+  <thead>
+    <tr><th>Recorded</th><th>Subject</th><th>Score</th><th>Term</th><th>Who</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.recorded_on }}</td>
+      <td>{{ row.subject }}{% if row.id in current_ids %} · Current{% endif %}</td>
+      <td>{{ row.score_text }}</td>
+      <td>{{ row.term }}</td>
+      <td>{{ child_label(children, row.child_id) }}</td>
+      <td>
+        <a href="/grades/{{ row.id }}/edit?child={{ filter_value }}">Edit</a>
+        <a href="/grades/{{ row.id }}/delete?child={{ filter_value }}">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% elif form is none %}
+<p class="empty">No grades for this view.</p>
+{% endif %}
+{% if form is not none %}
+{% set chosen = form.get('child_id') %}
+{% if chosen is none %}
+  {% set chosen = child_id %}
+{% endif %}
+<form class="record" method="post" action="{% if editing %}/grades/{{ form.get('id') }}{% else %}/grades{% endif %}?child={{ filter_value }}">
+  {% set shared = false %}
+  {% include "_child_select.html" %}
+  <label>Subject
+    <input name="subject" value="{{ form.get('subject', '') }}" required>
+  </label>
+  <label>Score or letter
+    <input name="score_text" value="{{ form.get('score_text', '') }}" required>
+  </label>
+  <label>Term
+    <input name="term" value="{{ form.get('term', '') }}" required>
+  </label>
+  <label>Recorded date
+    <input type="date" name="recorded_on" value="{{ form.get('recorded_on', '') }}" required>
+  </label>
+  <button type="submit">{% if editing %}Save{% else %}Add{% endif %}</button>
+</form>
+{% endif %}
+{% endblock %}

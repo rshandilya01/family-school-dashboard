@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Communications{% endblock %}
+{% block content %}
+<h2>Communications</h2>
+<p><a href="/communications/new?child={{ filter_value }}">Add a communication</a></p>
+{% if rows %}
+<table>
+  <thead>
+    <tr><th>Date</th><th>Title</th><th>Who</th><th>Source</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.occurred_on }}</td>
+      <td>
+        {{ row.title }}
+        <div>{{ row.body }}</div>
+        {% if row.link %}<div><a href="{{ row.link }}">{{ row.link }}</a></div>{% endif %}
+      </td>
+      <td>{{ child_label(children, row.child_id) }}</td>
+      <td>{{ row.source }}</td>
+      <td>
+        <a href="/communications/{{ row.id }}/edit?child={{ filter_value }}">Edit</a>
+        <a href="/communications/{{ row.id }}/delete?child={{ filter_value }}">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% elif form is none %}
+<p class="empty">No communications for this view.</p>
+{% endif %}
+{% if form is not none %}
+{% set chosen = form.get('child_id') %}
+{% if chosen is none %}
+  {% set chosen = child_id if child_id else 'both' %}
+{% endif %}
+<form class="record" method="post" action="{% if editing %}/communications/{{ form.get('id') }}{% else %}/communications{% endif %}?child={{ filter_value }}">
+  {% set shared = true %}
+  {% include "_child_select.html" %}
+  <label>Date
+    <input type="date" name="occurred_on" value="{{ form.get('occurred_on', '') }}" required>
+  </label>
+  <label>Title
+    <input name="title" value="{{ form.get('title', '') }}" required>
+  </label>
+  <label>Body
+    <textarea name="body" required>{{ form.get('body', '') }}</textarea>
+  </label>
+  <label>Source
+    <input name="source" value="{{ form.get('source', 'Manual') }}">
+  </label>
+  <label>Link
+    <input name="link" value="{{ form.get('link') or '' }}">
+  </label>
+  <button type="submit">{% if editing %}Save{% else %}Add{% endif %}</button>
+</form>
+{% endif %}
+{% endblock %}

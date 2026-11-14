@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Family school dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Family school dashboard</h1>
+    <p>Two children, on this computer.</p>
+    <nav>
+      <a href="/?child={{ filter_value }}">Home</a>
+      <a href="/communications?child={{ filter_value }}">Communications</a>
+      <a href="/events?child={{ filter_value }}">Events</a>
+      <a href="/assignments?child={{ filter_value }}">Assignments</a>
+      <a href="/grades?child={{ filter_value }}">Grades</a>
+      <a href="/children?child={{ filter_value }}">Children</a>
+    </nav>
+    <div class="switcher">
+      <a href="{{ request.url.path }}?child=all" {% if mode == 'all' %}aria-current="true"{% endif %}>Both</a>
+      {% for kid in children %}
+      <a href="{{ request.url.path }}?child={{ kid.id }}" {% if child_id == kid.id %}aria-current="true"{% endif %}>{{ kid.name }}</a>
+      {% endfor %}
+    </div>
+  </header>
+  {% if notice %}
+  <p class="error">{{ notice }}</p>
+  {% endif %}
+  {% if error %}
+  <p class="error">{{ error }}</p>
+  {% endif %}
+  {% block content %}{% endblock %}
+</body>
+</html>

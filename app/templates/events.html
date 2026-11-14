@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+{% block content %}
+<h2>Events</h2>
+<p><a href="/events/new?child={{ filter_value }}">Add an event</a></p>
+{% if rows %}
+<table>
+  <thead>
+    <tr><th>Date</th><th>Title</th><th>Kind</th><th>Who</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.event_on }}</td>
+      <td>
+        {{ row.title }}
+        {% if row.destination %}<div>{{ row.destination }}</div>{% endif %}
+        {% if row.notes %}<div>{{ row.notes }}</div>{% endif %}
+      </td>
+      <td>{{ kind_labels[row.kind] }}</td>
+      <td>{{ child_label(children, row.child_id) }}</td>
+      <td>
+        <a href="/events/{{ row.id }}/edit?child={{ filter_value }}">Edit</a>
+        <a href="/events/{{ row.id }}/delete?child={{ filter_value }}">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% elif form is none %}
+<p class="empty">No events for this view.</p>
+{% endif %}
+{% if form is not none %}
+{% set chosen = form.get('child_id') %}
+{% if chosen is none %}
+  {% set chosen = child_id if child_id else 'both' %}
+{% endif %}
+<form class="record" method="post" action="{% if editing %}/events/{{ form.get('id') }}{% else %}/events{% endif %}?child={{ filter_value }}">
+  {% set shared = true %}
+  {% include "_child_select.html" %}
+  <label>Kind
+    <select name="kind">
+      {% for value, label in [('field_trip', 'Field trip'), ('milestone', 'Milestone'), ('other', 'Other date')] %}
+      <option value="{{ value }}" {% if form.get('kind', 'field_trip') == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Date
+    <input type="date" name="event_on" value="{{ form.get('event_on', '') }}" required>
+  </label>
+  <label>Title
+    <input name="title" value="{{ form.get('title', '') }}" required>
+  </label>
+  <label>Destination
+    <input name="destination" value="{{ form.get('destination') or '' }}">
+  </label>
+  <label>Note
+    <textarea name="notes">{{ form.get('notes') or '' }}</textarea>
+  </label>
+  <button type="submit">{% if editing %}Save{% else %}Add{% endif %}</button>
+</form>
+{% endif %}
+{% endblock %}
