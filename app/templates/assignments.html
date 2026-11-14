@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Assignments{% endblock %}
+{% block content %}
+<h2>Assignments</h2>
+<p><a href="/assignments/new?child={{ filter_value }}">Add an assignment</a></p>
+{% if rows %}
+<table>
+  <thead>
+    <tr><th>Due</th><th>Title</th><th>Subject</th><th>Status</th><th>Who</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.due_on }}</td>
+      <td>{{ row.title }}</td>
+      <td>{{ row.subject }}</td>
+      <td>{{ status_labels[row.status] }}</td>
+      <td>{{ child_label(children, row.child_id) }}</td>
+      <td>
+        <a href="/assignments/{{ row.id }}/edit?child={{ filter_value }}">Edit</a>
+        <a href="/assignments/{{ row.id }}/delete?child={{ filter_value }}">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% elif form is none %}
+<p class="empty">No assignments for this view.</p>
+{% endif %}
+{% if form is not none %}
+{% set chosen = form.get('child_id') %}
+{% if chosen is none %}
+  {% set chosen = child_id %}
+{% endif %}
+<form class="record" method="post" action="{% if editing %}/assignments/{{ form.get('id') }}{% else %}/assignments{% endif %}?child={{ filter_value }}">
+  {% set shared = false %}
+  {% include "_child_select.html" %}
+  <label>Subject
+    <input name="subject" value="{{ form.get('subject', '') }}" required>
+  </label>
+  <label>Title
+    <input name="title" value="{{ form.get('title', '') }}" required>
+  </label>
+  <label>Due date
+    <input type="date" name="due_on" value="{{ form.get('due_on', '') }}" required>
+  </label>
+  <label>Status
+    <select name="status">
+      <option value="not_started" {% if form.get('status', 'not_started') == 'not_started' %}selected{% endif %}>Not started</option>
+      <option value="done" {% if form.get('status') == 'done' %}selected{% endif %}>Done</option>
+    </select>
+  </label>
+  <button type="submit">{% if editing %}Save{% else %}Add{% endif %}</button>
+</form>
+{% endif %}
+{% endblock %}

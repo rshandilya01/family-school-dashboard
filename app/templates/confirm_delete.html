@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Delete{% endblock %}
+{% block content %}
+<h2>Delete this?</h2>
+<p>{{ item_title }}</p>
+<form method="post" action="{{ action }}?child={{ filter_value }}">
+  <button type="submit">Delete</button>
+  <a href="{{ cancel }}?child={{ filter_value }}">Cancel</a>
+</form>
+{% endblock %}

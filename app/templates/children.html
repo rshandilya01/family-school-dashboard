@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Children{% endblock %}
+{% block content %}
+<h2>Children</h2>
+{% if children %}
+<ul>
+  {% for kid in children %}
+  <li data-child-name="{{ kid.name }}" data-child-id="{{ kid.id }}">
+    <form method="post" action="/children/{{ kid.id }}?child={{ filter_value }}">
+      <label>Name
+        <input name="name" value="{{ kid.name }}" required>
+      </label>
+      <button type="submit">Rename</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">No children yet. Add one, or load fictional sample data.</p>
+{% endif %}
+{% if children|length < 2 %}
+<form class="record" method="post" action="/children?child={{ filter_value }}">
+  <label>Name
+    <input name="name" required>
+  </label>
+  <button type="submit">Add child</button>
+</form>
+{% endif %}
+<form method="post" action="/sample-data?child={{ filter_value }}">
+  <button type="submit">Load sample data</button>
+</form>
+{% endblock %}
