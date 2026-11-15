@@ -221,3 +221,10 @@ __marimo__/
 
 # Local school records. Never commit the SQLite file.
 data/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*

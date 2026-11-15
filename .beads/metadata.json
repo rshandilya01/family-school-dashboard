@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "family_school_dashboard",
+  "project_id": "867a9cb3-af6e-4e33-a372-23555b35f881"
+}
