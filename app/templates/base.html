@@ -17,6 +17,7 @@
       <a href="/assignments?child={{ filter_value }}">Assignments</a>
       <a href="/grades?child={{ filter_value }}">Grades</a>
       <a href="/children?child={{ filter_value }}">Children</a>
+      <a href="/gmail?child={{ filter_value }}">Gmail</a>
     </nav>
     <div class="switcher">
       <a href="{{ request.url.path }}?child=all" {% if mode == 'all' %}aria-current="true"{% endif %}>Both</a>

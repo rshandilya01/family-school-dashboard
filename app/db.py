@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS communications (
     source TEXT NOT NULL,
     link TEXT,
     occurred_on TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    sender_name TEXT,
+    sender_email TEXT
 );
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY,
@@ -53,6 +55,23 @@ CREATE TABLE IF NOT EXISTS grades (
     recorded_on TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS school_mail_rules (
+    id INTEGER PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('sender', 'domain', 'label')),
+    value TEXT NOT NULL CHECK (length(value) > 0 AND length(value) <= 200),
+    created_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS school_mail_rules_kind_value
+    ON school_mail_rules (kind, lower(value));
+CREATE TABLE IF NOT EXISTS gmail_imports (
+    gmail_id TEXT PRIMARY KEY,
+    communication_id INTEGER REFERENCES communications(id),
+    created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS gmail_checkpoint (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    last_success_on TEXT
+);
 """
 
 
@@ -64,8 +83,18 @@ def connect(path: str) -> sqlite3.Connection:
     return conn
 
 
+def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    return {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+
+
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    columns = _columns(conn, "communications")
+    if "sender_name" not in columns:
+        conn.execute("ALTER TABLE communications ADD COLUMN sender_name TEXT")
+    if "sender_email" not in columns:
+        conn.execute("ALTER TABLE communications ADD COLUMN sender_email TEXT")
+    conn.execute("INSERT OR IGNORE INTO gmail_checkpoint (id, last_success_on) VALUES (1, NULL)")
     conn.commit()
 
 
@@ -417,8 +446,78 @@ def save_grade(conn: sqlite3.Connection, data: dict, row_id: int | None = None) 
 
 
 def delete_row(conn: sqlite3.Connection, table: str, row_id: int) -> None:
+    if table == "communications":
+        conn.execute(
+            "UPDATE gmail_imports SET communication_id = NULL WHERE communication_id = ?",
+            (row_id,),
+        )
     conn.execute(f"DELETE FROM {table} WHERE id = ?", (row_id,))
     conn.commit()
+
+
+def list_rules(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT id, kind, value FROM school_mail_rules ORDER BY id"
+    ).fetchall()
+
+
+def add_rule(conn: sqlite3.Connection, kind: str, value: str) -> str | None:
+    chosen = (kind or "").strip()
+    raw = (value or "").strip()
+    if chosen not in {"sender", "domain", "label"}:
+        return "Choose a sender, domain, or label."
+    if not raw:
+        return "Value is blank."
+    if len(raw) > 200:
+        return "Value is too long."
+    if chosen == "sender":
+        local, separator, domain = raw.partition("@")
+        if separator != "@" or not local or not domain or "@" in domain or " " in raw:
+            return f'"{raw}" is not a sender.'
+        stored = raw.casefold()
+    elif chosen == "domain":
+        stored = raw[1:] if raw.startswith("@") else raw
+        stored = stored.casefold()
+        if not stored or "@" in stored or " " in stored:
+            return f'"{raw}" is not a domain.'
+    else:
+        stored = raw
+    try:
+        conn.execute(
+            "INSERT INTO school_mail_rules (kind, value, created_at) VALUES (?, ?, ?)",
+            (chosen, stored, _now()),
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        return f'"{stored}" is already saved.'
+    return None
+
+
+def delete_rule(conn: sqlite3.Connection, rule_id: int) -> None:
+    conn.execute("DELETE FROM school_mail_rules WHERE id = ?", (rule_id,))
+    conn.commit()
+
+
+def last_success_on(conn: sqlite3.Connection) -> date | None:
+    row = conn.execute("SELECT last_success_on FROM gmail_checkpoint WHERE id = 1").fetchone()
+    if row is None or not row["last_success_on"]:
+        return None
+    return date.fromisoformat(row["last_success_on"])
+
+
+def gmail_communication_ids(conn: sqlite3.Connection) -> set[int]:
+    rows = conn.execute(
+        "SELECT communication_id FROM gmail_imports WHERE communication_id IS NOT NULL"
+    ).fetchall()
+    return {row["communication_id"] for row in rows}
+
+
+def gmail_id_for(conn: sqlite3.Connection, communication_id: int) -> str | None:
+    row = conn.execute(
+        "SELECT gmail_id FROM gmail_imports WHERE communication_id = ?",
+        (communication_id,),
+    ).fetchone()
+    return row["gmail_id"] if row else None
 
 
 def latest_grade_ids(rows: list[sqlite3.Row]) -> set[int]:

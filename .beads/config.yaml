@@ -75,7 +75,7 @@ sync:
     remote: "git+https://github.com/rshandilya01/family-school-dashboard"
 repos:
     primary: "."
-    additional:
-        - "/Users/rahulshandilya/.beads-planning"
 export:
     auto: true
+routing:
+    mode: maintainer

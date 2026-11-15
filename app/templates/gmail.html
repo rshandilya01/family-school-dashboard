@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Gmail{% endblock %}
+{% block content %}
+<h2>Gmail</h2>
+{% if connected %}
+<p>{{ address }}</p>
+<p>Gmail connected</p>
+<form method="post" action="/gmail/disconnect">
+  <button type="submit">Disconnect</button>
+</form>
+{% else %}
+<p>Gmail is not connected.</p>
+<p><a href="/gmail/connect">Connect Gmail</a></p>
+{% endif %}
+<h3>School mail</h3>
+<form class="record" method="post" action="/gmail/rules">
+  <label>Kind
+    <select name="kind">
+      <option value="sender" {% if rule_kind == 'sender' %}selected{% endif %}>Sender</option>
+      <option value="domain" {% if rule_kind == 'domain' %}selected{% endif %}>Domain</option>
+      <option value="label" {% if rule_kind == 'label' %}selected{% endif %}>Label</option>
+    </select>
+  </label>
+  <label>Value
+    <input name="value" value="{{ rule_value or '' }}">
+  </label>
+  <button type="submit">Add rule</button>
+</form>
+{% if rules %}
+<ul>
+  {% for rule in rules %}
+  <li>
+    {{ rule.kind }} {{ rule.value }}
+    <form method="post" action="/gmail/rules/{{ rule.id }}/delete">
+      <button type="submit">Remove</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+<form method="post" action="/gmail/check">
+  <button type="submit">Check mail</button>
+</form>
+{% endblock %}

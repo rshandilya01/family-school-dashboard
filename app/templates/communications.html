@@ -14,8 +14,14 @@
       <td>{{ row.occurred_on }}</td>
       <td>
         {{ row.title }}
+        {% if row.sender_name or row.sender_email %}
+        <div>{{ row.sender_name or '' }} {{ row.sender_email or '' }}</div>
+        {% endif %}
         <div>{{ row.body }}</div>
         {% if row.link %}<div><a href="{{ row.link }}">{{ row.link }}</a></div>{% endif %}
+        {% if gmail_open_ids is defined and row.id in gmail_open_ids %}
+        <div><a href="/communications/{{ row.id }}/original?child={{ filter_value }}">Open in Gmail</a></div>
+        {% endif %}
       </td>
       <td>{{ child_label(children, row.child_id) }}</td>
       <td>{{ row.source }}</td>
